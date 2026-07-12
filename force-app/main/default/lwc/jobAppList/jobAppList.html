@@ -1,0 +1,32 @@
+<template>
+    
+    <lightning-card title="Job ApplicationS List">
+
+        <div class="slds-p-around_medium">
+
+            <template if:true={applications}>
+
+                <lightning-datatable
+                    key-field="Id"
+                    data={applications}
+                    columns={columns}
+                    hide-checkbox-column>
+                </lightning-datatable>
+
+            </template>
+
+            <template if:true={error}>
+
+                <div class="slds-text-color_error">
+
+                    Error loading applications!
+
+                </div>
+
+            </template>
+
+        </div>
+
+    </lightning-card>
+
+</template>
