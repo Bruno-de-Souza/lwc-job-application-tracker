@@ -8,7 +8,7 @@ public with sharing class JobAppController {
 
         return [
 
-            SELECT Id, Company__c, Role__c, Status__c, AppliedDate__c FROM JobApplication__c ORDER BY AppliedDate__c DESC LIMIT 200
+            SELECT Id, Company__c, Role__c, Status__c, AppliedDate__c FROM JobApplication__c ORDER BY AppliedDate__c ASC LIMIT 200
 
         ];
 

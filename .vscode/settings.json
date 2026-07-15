@@ -5,5 +5,11 @@
     "**/.sf": true,
     "**/.sfdx": true
   },
-  "xml.preferences.showSchemaDocumentationType": "none"
+  "xml.preferences.showSchemaDocumentationType": "none",
+  "salesforce.agentforceVibesAutocomplete.enableAutocompletionsByFileType": {
+    "apex": false,
+    "javascript": false,
+    "css": true,
+    "html": true
+  }
 }
