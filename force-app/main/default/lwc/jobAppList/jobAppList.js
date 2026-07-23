@@ -1,4 +1,4 @@
-import { LightningElement, wire } from 'lwc';
+import { LightningElement, wire, api } from 'lwc';
 import getApplications from '@salesforce/apex/JobAppController.getApplications';
 import updateApplicationStatus from '@salesforce/apex/JobAppController.updateApplicationStatus';
 import { ShowToastEvent } from 'lightning/platformShowToastEvent';
@@ -21,19 +21,27 @@ const COLUMNS = [
     { label: 'Role', fieldName: 'Role__c', type: 'text', editable: 'true' },
     { label: 'Status', fieldName: 'Status__c', type: 'text', editable: 'true' },
     { label: 'Applied Date', fieldName: 'AppliedDate__c', type: 'text', editable: 'true' },
-    {
-        type: 'action',
-        typeAttributes: { rowActions: ROW_ACTIONS }
-    }
+    { type: 'action',typeAttributes: { rowActions: ROW_ACTIONS } }
 
 ];
 
 export default class JobAppList extends LightningElement {
 
     columns = COLUMNS;
-    applications;
+    allApplications = [];
     error;
     wiredResult;
+
+    _selectedStatus = 'All';
+
+    @api
+    get selectedStatus() {
+        return this._selectedStatus;
+    }
+    set selectedStatus(value) {
+        this._selectedStatus = value || 'All';
+        this.emitStats();
+    }
 
     @wire(getApplications)
     wiredApplications(result) {
