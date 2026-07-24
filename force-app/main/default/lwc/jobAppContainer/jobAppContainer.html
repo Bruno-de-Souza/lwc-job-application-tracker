@@ -1,3 +1,29 @@
 <template>
-    
+    <lightning-card title="Job Application Tracker">
+        <div class="slds-p-around_medium">
+            <lightning-combobox
+                name="statusFilter"
+                label="Filter by Status"
+                value={selectedStatus}
+                options={statusOptions}
+                onchange={handleFilterChange}>
+            </lightning-combobox>
+        </div>
+    </lightning-card>
+
+    <div class="slds-m-top_medium">
+        <c-job-app-stats
+            total={stats.total}
+            interview={stats.interview}
+            offer={stats.offer}
+            rejected={stats.rejected}>
+        </c-job-app-stats>
+    </div>
+
+    <div class="slds-m-top_medium">
+        <c-job-app-list
+            selected-status={selectedStatus}
+            onstatschange={handleStatsChange}>
+        </c-job-app-list>
+    </div>
 </template>

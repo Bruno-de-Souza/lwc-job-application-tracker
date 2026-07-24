@@ -1,3 +1,33 @@
 <template>
-    
+    <lightning-card title="Application Stats">
+        <div class="slds-p-around_medium slds-grid slds-wrap slds-gutters">
+            <div class="slds-col slds-size_1-of-2 slds-medium-size_1-of-4">
+                <div class="slds-box slds-text-align_center">
+                    <p class="slds-text-title">Total</p>
+                    <p class="slds-text-heading_medium">{total}</p>
+                </div>
+            </div>
+
+            <div class="slds-col slds-size_1-of-2 slds-medium-size_1-of-4">
+                <div class="slds-box slds-text-align_center">
+                    <p class="slds-text-title">Interview</p>
+                    <p class="slds-text-heading_medium">{interview}</p>
+                </div>
+            </div>
+
+            <div class="slds-col slds-size_1-of-2 slds-medium-size_1-of-4">
+                <div class="slds-box slds-text-align_center">
+                    <p class="slds-text-title">Offer</p>
+                    <p class="slds-text-heading_medium">{offer}</p>
+                </div>
+            </div>
+
+            <div class="slds-col slds-size_1-of-2 slds-medium-size_1-of-4">
+                <div class="slds-box slds-text-align_center">
+                    <p class="slds-text-title">Rejected</p>
+                    <p class="slds-text-heading_medium">{rejected}</p>
+                </div>
+            </div>
+        </div>
+    </lightning-card>
 </template>

@@ -13,8 +13,6 @@ const ROW_ACTIONS = [
 
 ];
 
-console.log('Line 16');
-
 const COLUMNS = [
 
     { label: 'Company', fieldName: 'Company__c', type: 'text', editable: 'true' },
@@ -49,12 +47,44 @@ export default class JobAppList extends LightningElement {
         const { data, error } = result;
 
         if (data) {
-            this.applications = data;
+            this.allApplications = data;
             this.error = undefined;
+            this.emitStats();
         } else if (error) {
             this.error = error;
-            this.applications = undefined;
+            this.allApplications = [];
         }
+    }
+
+    get applications() {
+        if (this._selectedStatus === 'All') {
+            return this.allApplications;
+        }
+        return this.allApplications.filter(
+            app => app.Status__c === this._selectedStatus
+        );
+    }
+
+    emitStats() {
+    const source =
+        this._selectedStatus === 'All'
+            ? this.allApplications
+            : this.allApplications.filter(
+                    app => app.Status__c === this._selectedStatus
+                );
+
+    const stats = {
+        total: source.length,
+        interview: source.filter(a => a.Status__c === 'Interview').length,
+        offer: source.filter(a => a.Status__c === 'Offer').length,
+        rejected: source.filter(a => a.Status__c === 'Rejected').length
+    };
+
+    this.dispatchEvent(
+        new CustomEvent('statschange', {
+            detail: stats
+            })
+        );
     }
 
     async handledRowAction(event) {
@@ -92,8 +122,6 @@ export default class JobAppList extends LightningElement {
 
             });
 
-            console.log('Line 89');
-
             this.dispatchEvent(
                 new ShowToastEvent({
 
@@ -103,12 +131,10 @@ export default class JobAppList extends LightningElement {
 
                 })
             );
-
-            console.log('Line 101');
             
             await refreshApex(this.wiredResult);
 
-            console.log('LLine 105');
+            this.emitStats();
 
         } catch (error) {
 
@@ -124,7 +150,6 @@ export default class JobAppList extends LightningElement {
 
             );
 
-            console.log('Line 121');
             
         }
 
