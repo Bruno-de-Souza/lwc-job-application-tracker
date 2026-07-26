@@ -1,4 +1,12 @@
 <template>
+    <div class="slds-p-around_large">
+        <lightning-button 
+            label="Refresh App" 
+            icon-name="utility:refresh" 
+            onclick={handleRefresh}>
+        </lightning-button>
+    </div>
+
     <lightning-card title="Job Application Tracker">
         <div class="slds-p-around_medium">
             <lightning-combobox
@@ -14,6 +22,7 @@
     <div class="slds-m-top_medium">
         <c-job-app-stats
             total={stats.total}
+            applied={stats.applied}
             interview={stats.interview}
             offer={stats.offer}
             rejected={stats.rejected}>

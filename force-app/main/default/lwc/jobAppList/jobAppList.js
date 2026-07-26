@@ -75,6 +75,7 @@ export default class JobAppList extends LightningElement {
 
     const stats = {
         total: source.length,
+        applied: source.filter(a => a.Status__c === 'Applied').length,
         interview: source.filter(a => a.Status__c === 'Interview').length,
         offer: source.filter(a => a.Status__c === 'Offer').length,
         rejected: source.filter(a => a.Status__c === 'Rejected').length

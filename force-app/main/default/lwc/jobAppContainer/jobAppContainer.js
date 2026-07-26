@@ -1,10 +1,12 @@
 import { LightningElement } from 'lwc';
+import { RefreshEvent } from 'lightning/refresh';
 
 export default class JobAppContainer extends LightningElement {
     selectedStatus = 'All';
 
     stats = {
         total: 0,
+        applied: 0,
         interview: 0,
         offer: 0,
         rejected: 0
@@ -24,5 +26,9 @@ export default class JobAppContainer extends LightningElement {
 
     handleStatsChange(event) {
         this.stats = event.detail;
+    }
+
+    handleRefresh() {
+        window.location.reload();
     }
 }
