@@ -4,23 +4,45 @@
 
         <div class="slds-p-around_medium">
 
-            <template if:true={applications}>
+            <template if:true={isLoading}>
+                
+                <lightning-spinner alternative-text="Loading Page" size="medium">
+
+                </lightning-spinner>
+
+            </template>
+
+            <template if:true={hasRecords}>
 
                 <lightning-datatable
                     key-field="Id"
                     data={applications}
                     columns={columns}
-                    onrowaction={handledRowAction}
+                    onrowaction={handleRowAction}
                     hide-checkbox-column>
                 </lightning-datatable>
 
             </template>
 
+            <template if:true="{showEmptyState}">
+
+                <div class="sldc-box slds-theme_alert-texture slds-text-allign_center">
+                    <p class="slds-text-heading_small">
+                        No Applications Found!
+                    </p>
+                    <p class="slds-m-top_x-small">
+                        Try changing the filter or add a new Job application!
+                    </p>
+                </div>
+
+            </template>
+
             <template if:true={error}>
 
-                <div class="slds-text-color_error">
+                <div class="slds-box slds-theme_error slds-m-top_small">
 
-                    Error loading applications!
+                    <p class="slds-text-heading_small">Something went wrong</p>
+                    <p class="slds-m-top_x-small">{errorMessage}</p>
 
                 </div>
 

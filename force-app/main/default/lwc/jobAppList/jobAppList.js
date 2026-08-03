@@ -4,31 +4,31 @@ import updateApplicationStatus from '@salesforce/apex/JobAppController.updateApp
 import { ShowToastEvent } from 'lightning/platformShowToastEvent';
 import { refreshApex } from '@salesforce/apex';
 
-const ROW_ACTIONS = [
-
-    { label : 'Applied', name: 'Applied' },
-    { label : 'Interviewed', name: 'Interview' },
+const BASE_ROW_ACTIONS = [
+    { label: 'Applied', name: 'Applied' },
+    { label: 'Interview', name: 'Interview' },
     { label : 'Offer', name: 'Offer' },
     { label : 'Rejected', name: 'Rejected' }
 
 ];
 
 const COLUMNS = [
-
-    { label: 'Company', fieldName: 'Company__c', type: 'text', editable: 'true' },
-    { label: 'Role', fieldName: 'Role__c', type: 'text', editable: 'true' },
-    { label: 'Status', fieldName: 'Status__c', type: 'text', editable: 'true' },
-    { label: 'Applied Date', fieldName: 'AppliedDate__c', type: 'text', editable: 'true' },
-    { type: 'action',typeAttributes: { rowActions: ROW_ACTIONS } }
-
+    { label: 'Company', fieldName: 'Company__c', type: 'text' },
+    { label: 'Role', fieldName: 'Role__c', type: 'text' },
+    { label: 'Status', fieldName: 'Status__c', type: 'text' },
+    { label: 'Applied Date', fieldName: 'AppliedDate__c', type: 'text' },
+    { type: 'action', typeAttributes: { rowActions: { fieldName: 'rowActions' } } }
 ];
 
 export default class JobAppList extends LightningElement {
-
     columns = COLUMNS;
     allApplications = [];
     error;
+    errorMessage = '';
     wiredResult;
+
+    isLoading = true;
+    isUpdating = false;
 
     _selectedStatus = 'All';
 
@@ -47,31 +47,54 @@ export default class JobAppList extends LightningElement {
         const { data, error } = result;
 
         if (data) {
-            this.allApplications = data;
             this.error = undefined;
+            this.errorMessage = '';
+            this.allApplications = data.map(row => ({
+                ...row,
+                rowActions: this.buildRowActions()
+            }));
             this.emitStats();
         } else if (error) {
             this.error = error;
+            this.errorMessage = error?.body?.message || 'Unable to load job applications.';
             this.allApplications = [];
         }
+
+        this.isLoading = false;
     }
 
     get applications() {
-        if (this._selectedStatus === 'All') {
-            return this.allApplications;
-        }
-        return this.allApplications.filter(
-            app => app.Status__c === this._selectedStatus
-        );
+        const source =
+            this._selectedStatus === 'All'
+                ? this.allApplications
+                : this.allApplications.filter(app => app.Status__c === this._selectedStatus);
+
+        return source.map(row => ({
+            ...row,
+            rowActions: this.buildRowActions()
+        }));
+    }
+
+    get hasRecords() {
+        return this.applications && this.applications.length > 0;
+    }
+
+    get showEmptyState() {
+        return !this.isLoading && !this.error && !this.hasRecords;
+    }
+
+    buildRowActions() {
+        return BASE_ROW_ACTIONS.map(action => ({
+            ...action,
+            disabled: this.isUpdating
+        }));
     }
 
     emitStats() {
-    const source =
-        this._selectedStatus === 'All'
-            ? this.allApplications
-            : this.allApplications.filter(
-                    app => app.Status__c === this._selectedStatus
-                );
+        const source =
+            this._selectedStatus === 'All'
+                ? this.allApplications
+                : this.allApplications.filter(app => app.Status__c === this._selectedStatus);
 
     const stats = {
         total: source.length,
@@ -81,17 +104,13 @@ export default class JobAppList extends LightningElement {
         rejected: source.filter(a => a.Status__c === 'Rejected').length
     };
 
-    this.dispatchEvent(
-        new CustomEvent('statschange', {
-            detail: stats
-            })
-        );
+        this.dispatchEvent(new CustomEvent('statschange', { detail: stats }));
     }
 
-    async handledRowAction(event) {
+    async handleRowAction(event) {
+        if (this.isUpdating) return;
 
         const actionName = event.detail.action.name;
-        
         const row = event.detail.row;
 
         let newStatus;
@@ -112,48 +131,35 @@ export default class JobAppList extends LightningElement {
                 break;
             default :
                 return;
-
         }
+
+        this.isUpdating = true;
 
         try {
-            await updateApplicationStatus({
-                
-                recordId: row.Id,
-                newStatus: newStatus
-
-            });
+            await updateApplicationStatus({ recordId: row.Id, newStatus });
 
             this.dispatchEvent(
                 new ShowToastEvent({
-
                     title: 'Success',
-                    message: `Status update to ${newStatus}`,
+                    message: `Status updated to ${newStatus}`,
                     variant: 'success'
-
                 })
             );
-            
+
+            this.isLoading = true;
             await refreshApex(this.wiredResult);
-
             this.emitStats();
-
-        } catch (error) {
-
+        } catch (err) {
             this.dispatchEvent(
-
                 new ShowToastEvent({
-
                     title: 'Error updating status',
-                    message: error?.body?.message || 'Unknown error',
-                    variant: 'e'
-
+                    message: err?.body?.message || 'Unknown error',
+                    variant: 'error'
                 })
-
             );
-
-            
+        } finally {
+            this.isUpdating = false;
+            this.isLoading = false;
         }
-
     }
-
 }
