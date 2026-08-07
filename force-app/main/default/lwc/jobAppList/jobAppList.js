@@ -3,6 +3,7 @@ import getApplications from '@salesforce/apex/JobAppController.getApplications';
 import updateApplicationStatus from '@salesforce/apex/JobAppController.updateApplicationStatus';
 import { ShowToastEvent } from 'lightning/platformShowToastEvent';
 import { refreshApex } from '@salesforce/apex';
+import { deleteRecord } from 'lightning/uiRecordApi';
 
 const BASE_ROW_ACTIONS = [
     { label: 'Applied', name: 'Applied' },
@@ -17,7 +18,18 @@ const COLUMNS = [
     { label: 'Role', fieldName: 'Role__c', type: 'text' },
     { label: 'Status', fieldName: 'Status__c', type: 'text' },
     { label: 'Applied Date', fieldName: 'AppliedDate__c', type: 'text' },
-    { type: 'action', typeAttributes: { rowActions: { fieldName: 'rowActions' } } }
+    { type: 'action', typeAttributes: { rowActions: { fieldName: 'rowActions' } } },
+    { 
+        type: 'button', 
+        initialWidth: 150,
+        typeAttributes: {
+            label: 'Delete',
+            name: 'delete',
+            title: 'Delete',
+            variante: 'destructive',
+            disabled: { fieldName: 'disableDelete' }
+        } 
+    }
 ];
 
 export default class JobAppList extends LightningElement {
@@ -51,7 +63,8 @@ export default class JobAppList extends LightningElement {
             this.errorMessage = '';
             this.allApplications = data.map(row => ({
                 ...row,
-                rowActions: this.buildRowActions()
+                rowActions: this.buildRowActions(),
+                disableDelete: this.isUpdating
             }));
             this.emitStats();
         } else if (error) {
@@ -71,7 +84,8 @@ export default class JobAppList extends LightningElement {
 
         return source.map(row => ({
             ...row,
-            rowActions: this.buildRowActions()
+            rowActions: this.buildRowActions(),
+            disableDelete: this.isUpdating
         }));
     }
 
@@ -95,14 +109,14 @@ export default class JobAppList extends LightningElement {
             this._selectedStatus === 'All'
                 ? this.allApplications
                 : this.allApplications.filter(app => app.Status__c === this._selectedStatus);
-
-    const stats = {
-        total: source.length,
-        applied: source.filter(a => a.Status__c === 'Applied').length,
-        interview: source.filter(a => a.Status__c === 'Interview').length,
-        offer: source.filter(a => a.Status__c === 'Offer').length,
-        rejected: source.filter(a => a.Status__c === 'Rejected').length
-    };
+                
+        const stats = {
+            total: source.length,
+            applied: source.filter(a => a.Status__c === 'Applied').length,
+            interview: source.filter(a => a.Status__c === 'Interview').length,
+            offer: source.filter(a => a.Status__c === 'Offer').length,
+            rejected: source.filter(a => a.Status__c === 'Rejected').length
+        };
 
         this.dispatchEvent(new CustomEvent('statschange', { detail: stats }));
     }
@@ -113,38 +127,49 @@ export default class JobAppList extends LightningElement {
         const actionName = event.detail.action.name;
         const row = event.detail.row;
 
-        let newStatus;
-
-        switch (actionName) {
-
-            case 'Applied' :
-                newStatus = 'Applied';
-                break;
-            case 'Interview' :
-                newStatus = 'Interview';
-                break;
-            case 'Offer' :
-                newStatus = 'Offer';
-                break;
-            case 'Rejected' :
-                newStatus = 'Rejected';
-                break;
-            default :
-                return;
-        }
-
         this.isUpdating = true;
 
         try {
-            await updateApplicationStatus({ recordId: row.Id, newStatus });
+            if (actionName === 'delete') {
+                await deleteRecord(row.Id);
 
-            this.dispatchEvent(
-                new ShowToastEvent({
-                    title: 'Success',
-                    message: `Status updated to ${newStatus}`,
-                    variant: 'success'
-                })
-            );
+                this.dispatchEvent(
+                    new ShowToastEvent({
+                        title: 'Deleted',
+                        message: 'Application deleted successfully',
+                        variant: 'success'
+                    })
+                );
+            } else {
+                let newStatus;
+
+                switch (actionName) {
+                    case 'Applied':
+                        newStatus = 'Applied';
+                        break;
+                    case 'Interview':
+                        newStatus = 'Interview';
+                        break;
+                    case 'Offer':
+                        newStatus = 'Offer';
+                        break;
+                    case 'Rejected':
+                        newStatus = 'Rejected';
+                        break;
+                    default:
+                        return;
+                }
+
+                await updateApplicationStatus({ recordId: row.Id, newStatus });
+
+                this.dispatchEvent(
+                    new ShowToastEvent({
+                        title: 'Success',
+                        message: `Status updated to ${newStatus}`,
+                        variant: 'success'
+                    })
+                );
+            }
 
             this.isLoading = true;
             await refreshApex(this.wiredResult);
@@ -152,8 +177,8 @@ export default class JobAppList extends LightningElement {
         } catch (err) {
             this.dispatchEvent(
                 new ShowToastEvent({
-                    title: 'Error updating status',
-                    message: err?.body?.message || 'Unknown error',
+                    title: 'Error',
+                    message: err?.body?.message || err?.message || 'Unknown error',
                     variant: 'error'
                 })
             );

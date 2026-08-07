@@ -6,6 +6,10 @@ public with sharing class JobAppController {
     @AuraEnabled(cacheable=true)
     public static List<JobApplication__c> getApplications() {
 
+        List<JobApplication__c> jobs = [ SELECT Id FROM JobApplication__c ];
+
+        System.debug('Jobs: ' + jobs);
+
         return [
 
             SELECT Id, Company__c, Role__c, Status__c, AppliedDate__c FROM JobApplication__c ORDER BY AppliedDate__c ASC LIMIT 200
